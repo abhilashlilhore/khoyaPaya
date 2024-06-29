@@ -7,7 +7,7 @@ class KhoyaPaya
     function __construct($con)
     {
         $this->conn = $con;
-        $this->image_dir = './image/';
+        $this->image_dir = 'http://localhost/khoya-paya/image/';
     }
 
     function add_image($filename, $dir)
@@ -20,7 +20,7 @@ class KhoyaPaya
             return in_array($file_extension, $allowed_extensions);
         }
 
-        $target_dir = $this->image_dir . '/' . $dir;
+        $target_dir = $this->image_dir .  $dir.'/';
         $uploadOk = 1;
 
         // Check if the images directory exists, if not, create it
@@ -74,8 +74,6 @@ class KhoyaPaya
         }
     }
 
-
-
     function signup($data)
     {
 
@@ -88,7 +86,7 @@ class KhoyaPaya
         }
 
         ///// mobiel check 
-        $sql = "SELECT * From users where mobile ='" . $data['mobile'] . "'";
+         $sql = "SELECT * From users where phone ='" . $data['mobile'] . "'";
         $data = mysqli_num_rows(mysqli_query($this->conn, $sql));
 
         if ($data > 0) {
@@ -143,6 +141,40 @@ class KhoyaPaya
 
             $responce['status'] = 1;
             $responce['message'] = "User registered successfully";
+            $responce['url'] = $this->image_dir.'user/';
+            $responce['data'] = $data;
+            return json_encode($responce);
+        }
+    }
+
+    function login($data)
+    {
+
+        extract($_REQUEST);
+        if (!isset($data['password']) || !isset($data['mobile'])) {
+
+            $responce['status'] = 0;
+            $responce['message'] = "password and mobile number required fields";
+            return json_encode($responce);
+        }
+
+        ///// mobiel check 
+        $password = password_hash($data['password'], PASSWORD_DEFAULT);
+         $sql = "SELECT * From users where phone ='" . $data['mobile'] . "' and password ='" .$password. "' limit 1";
+         $run_query=mysqli_query($this->conn, $sql);
+        $data = mysqli_num_rows($run_query);
+ 
+
+        if ($data==0) {
+            $responce['status'] = 0;
+            $responce['message'] = "Mobile number or password not matched: " . $this->conn->error;
+            return json_encode($responce);
+        } else {          
+           
+            $data = mysqli_fetch_assoc($run_query);
+            $responce['status'] = 1;
+            $responce['message'] = "User login successfully";
+            $responce['url'] = $this->image_dir.'user/';
             $responce['data'] = $data;
             return json_encode($responce);
         }
@@ -184,12 +216,27 @@ class KhoyaPaya
             return json_encode($responce);
         }
 
+        if ($_FILES['image']) {
+
+            $image = $this->add_image($_FILES['image'], 'items');
+            if ($image['status'] == 1) {
+                $image = $image['data'];
+            } else {
+
+                $responce['status'] = 0;
+                $responce['message'] = $image['message'];
+                return json_encode($responce);
+            }
+        } else {
+            $image = '';
+        }
+
         $user_id = $data['user_id'];
         $category_id = $data['category_id'];
         $description = $data['description'];
         $found_date = $data['found_date'];
         $location = $data['location'];
-        $image = $data['image'];
+        $image = $image;
         $type = $data['type'];
 
         // Insert found item into the found_items table
@@ -207,6 +254,7 @@ class KhoyaPaya
 
             $responce['status'] = 1;
             $responce['message'] = "Data inserted successfully";
+            $responce['url'] = $this->image_dir.'items/';
             $responce['data'] = $data;
             return json_encode($responce);
         }
