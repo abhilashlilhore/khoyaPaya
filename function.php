@@ -15,7 +15,9 @@ $obj=new KhoyaPaya($conn);
 if($_SERVER["REQUEST_METHOD"] == "POST" && $_GET['action']=='register'){
    echo  $obj->signup($_REQUEST);
 }else
-
+if($_SERVER["REQUEST_METHOD"] == "POST" && $_GET['action']=='login'){
+   echo  $obj->login($_REQUEST);
+}else
 if($_SERVER["REQUEST_METHOD"] == "GET" && $_GET['action']=='get_category'){
     echo  $obj->get_cat($_REQUEST);
 }else
